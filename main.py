@@ -1,4 +1,5 @@
 from openpyxl import load_workbook
+import re
 
 wb = load_workbook("./input_data/IR_Spring2021_ph12_7k.xlsx")
 sheet = wb.active
@@ -13,5 +14,14 @@ for i in range(2, 7002):
     content_list.append(data_content)
     url_list.append(data_url)
 
-print(content_list[2])
+a = content_list[2]
+a = re.sub('\.', ' ', a)
+a = re.sub('،', ' ', a)
+a = re.sub('\n', ' ', a)
+a = re.sub(':', ' ', a)
+a = re.sub(';', ' ', a)
+a = re.sub(r' +', ' ', a)
 
+token_list = re.split(" ", a)
+for token in token_list:
+    print(token)
