@@ -21,6 +21,7 @@ for content in content_list:
     text = content
     text = re.sub('\.', ' ', text)
     text = re.sub('،', ' ', text)
+    text = re.sub(',', ' ', text)
     text = re.sub('\n', ' ', text)
     text = re.sub(':', ' ', text)
     text = re.sub('؛', ' ', text)
@@ -30,11 +31,15 @@ for content in content_list:
     text = re.sub('\]', ' ', text)
     text = re.sub('\[', ' ', text)
     text = re.sub('-', ' ', text)
+    text = re.sub('\*', ' ', text)
+    text = re.sub('«', ' ', text)
+    text = re.sub('»', ' ', text)
+
     text = re.sub(r' +', ' ', text)
 
     tokens = re.split(" ", text)
-    sorted_tokens = sorted(tokens)
-    tokens_list.append(sorted_tokens)
+    # sorted_tokens = sorted(tokens)
+    tokens_list.append(tokens)
 
 
 all_words = []
@@ -50,5 +55,16 @@ for i in range(len(values)):
     if counts[i] > 1000:
         stop_words.append(values[i])
 
-print(stop_words)
-print(len(stop_words))
+stop_words = set(stop_words)
+
+term_doc_list = []
+for i, tokens_list in enumerate(tokens_list):
+    unique_tokens_list = set(tokens_list)
+    unique_tokens_list -= stop_words
+    for word in unique_tokens_list:
+        term_doc_list.append({'term': word, 'doc': i+1})
+
+sorted_term_doc_list = sorted(term_doc_list, key=lambda x: x["term"])
+
+for v in reverse_index:
+    print(v)
