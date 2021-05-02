@@ -1,11 +1,14 @@
 from openpyxl import load_workbook
 import re
+from collections import Counter
+import numpy as np
 
 wb = load_workbook("./input_data/IR_Spring2021_ph12_7k.xlsx")
 sheet = wb.active
 
 content_list = []
 url_list = []
+tokens_list = []
 
 for i in range(2, 7002):
     data_id = int(sheet.cell(i, 1).value)
@@ -14,14 +17,38 @@ for i in range(2, 7002):
     content_list.append(data_content)
     url_list.append(data_url)
 
-a = content_list[2]
-a = re.sub('\.', ' ', a)
-a = re.sub('،', ' ', a)
-a = re.sub('\n', ' ', a)
-a = re.sub(':', ' ', a)
-a = re.sub(';', ' ', a)
-a = re.sub(r' +', ' ', a)
+for content in content_list:
+    text = content
+    text = re.sub('\.', ' ', text)
+    text = re.sub('،', ' ', text)
+    text = re.sub('\n', ' ', text)
+    text = re.sub(':', ' ', text)
+    text = re.sub('؛', ' ', text)
+    text = re.sub('"', ' ', text)
+    text = re.sub('\(', ' ', text)
+    text = re.sub('\)', ' ', text)
+    text = re.sub('\]', ' ', text)
+    text = re.sub('\[', ' ', text)
+    text = re.sub('-', ' ', text)
+    text = re.sub(r' +', ' ', text)
 
-token_list = re.split(" ", a)
-for token in token_list:
-    print(token)
+    tokens = re.split(" ", text)
+    sorted_tokens = sorted(tokens)
+    tokens_list.append(sorted_tokens)
+
+
+all_words = []
+for tokens in tokens_list:
+    all_words += tokens
+
+
+values, counts = np.unique(all_words, return_counts=True)
+stop_words_threshold = 1000
+stop_words = []
+
+for i in range(len(values)):
+    if counts[i] > 1000:
+        stop_words.append(values[i])
+
+print(stop_words)
+print(len(stop_words))
