@@ -35,6 +35,8 @@ class SearchEngine:
             text = re.sub(':', ' ', text)
             text = re.sub('؛', ' ', text)
             text = re.sub('"', ' ', text)
+            text = re.sub('“', ' ', text)
+            text = re.sub('”', ' ', text)
             text = re.sub('\(', ' ', text)
             text = re.sub('\)', ' ', text)
             text = re.sub('\]', ' ', text)
@@ -43,6 +45,14 @@ class SearchEngine:
             text = re.sub('\*', ' ', text)
             text = re.sub('«', ' ', text)
             text = re.sub('»', ' ', text)
+            text = re.sub('؟', ' ', text)
+            text = re.sub('\?', ' ', text)
+            text = re.sub('/', ' ', text)
+            text = re.sub('!', ' ', text)
+            text = re.sub('-', ' ', text)
+            text = re.sub('–', ' ', text)
+            text = re.sub('ـ', ' ', text)
+            text = re.sub('…', ' ', text)
 
             text = re.sub(r' +', ' ', text)
 
@@ -51,21 +61,33 @@ class SearchEngine:
             self.tokens_list.append(tokens)
 
     @staticmethod
-    def _normalize_remove_prefix(token):
+    def _normalize_remove_postfix(token):
         token = re.sub(r" *تر$", "", token)
         token = re.sub(r" *ترین$", "", token)
         token = re.sub(r" *ها$", "", token)
+        token = re.sub(r" *های$", "", token)
         token = re.sub(r" *ات$", "", token)
+        return token
+
+    @staticmethod
+    def _normalize_remove_prefix(token):
+        token = re.sub(r"^می *", "", token)
         return token
 
     def normalize(self, token):
         token = self._normalize_remove_prefix(token)
+        token = self._normalize_remove_postfix(token)
         return token
 
     def _normalize_tokens(self):
+        new_token_list = []
         for tokens in self.tokens_list:
+            new_tokens = []
             for token in tokens:
                 token = self.normalize(token)
+                new_tokens.append(token)
+            new_token_list.append(new_tokens)
+        self.tokens_list = new_token_list
 
     def _find_stop_words(self):
         all_words = []

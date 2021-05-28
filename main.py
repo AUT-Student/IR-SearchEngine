@@ -2,11 +2,11 @@ from search_engine import SearchEngine
 
 searchEngine = SearchEngine()
 
-# searchEngine.create_inverted_index()
+searchEngine.create_inverted_index()
 # searchEngine.load_inverted_index()
 
 # print()
 # print(searchEngine.get_documents("مازوت"))
 
-token = "برترین‌ها"
+token = "می‌خورد"
 print(searchEngine.normalize(token))
