@@ -1,3 +1,5 @@
+from bisect import bisect_left
+
 from openpyxl import load_workbook
 import re
 import numpy as np
@@ -74,28 +76,47 @@ class SearchEngine:
             for word in unique_tokens_list:
                 term_doc_list.append({'term': word, 'doc': i + 1})
 
-        # sorted_term_doc_list = sorted(term_doc_list, key=lambda x: x["term"])
+        sorted_term_doc_list = sorted(term_doc_list, key=lambda x: x["term"])
 
         self.inverted_index = []
         previous_term = None
-        for term_doc in term_doc_list:
+        for term_doc in sorted_term_doc_list:
             current_term = term_doc["term"]
             doc_id = term_doc["doc"]
             if previous_term != current_term:
                 self.inverted_index.append({"term": current_term, "docs": []})
+            self.inverted_index[-1]["docs"].append(doc_id)
 
-                self.inverted_index[-1]["docs"].append(doc_id)
+            previous_term = current_term
 
     def _save_inverted_index(self):
         with open('inverted_index', 'wb') as fp:
             pickle.dump(self.inverted_index, fp)
+        with open('dictionary', 'wb') as fp:
+            pickle.dump(self.dictionary, fp)
 
     def load_inverted_index(self):
         with open('inverted_index', 'rb') as fp:
             self.inverted_index = pickle.load(fp)
+        with open('dictionary', 'rb') as fp:
+            self.dictionary = pickle.load(fp)
 
     def get_documents(self, word):
-        return self.inverted_index[word]
+        i = bisect_left(self.dictionary, word)
+        if i != len(self.inverted_index):
+            return self.inverted_index[i]
+        else:
+            return None
+
+    def _create_dictionary(self):
+        self.dictionary = []
+        for i in self.inverted_index:
+            print(i)
+
+        inverted_index_term = []
+        for x in self.inverted_index:
+            self.dictionary.append(x["term"])
+
 
     def create_inverted_index(self):
         self._load_documents()
@@ -103,5 +124,6 @@ class SearchEngine:
         self._normalize()
         self._find_stop_words()
         self._aggregate_inverted_index()
+        self._create_dictionary()
         self._save_inverted_index()
 
