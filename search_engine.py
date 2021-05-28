@@ -50,8 +50,22 @@ class SearchEngine:
             # sorted_tokens = sorted(tokens)
             self.tokens_list.append(tokens)
 
-    def _normalize(self):
-        pass
+    @staticmethod
+    def _normalize_remove_prefix(token):
+        token = re.sub(r" *تر$", "", token)
+        token = re.sub(r" *ترین$", "", token)
+        token = re.sub(r" *ها$", "", token)
+        token = re.sub(r" *ات$", "", token)
+        return token
+
+    def normalize(self, token):
+        token = self._normalize_remove_prefix(token)
+        return token
+
+    def _normalize_tokens(self):
+        for tokens in self.tokens_list:
+            for token in tokens:
+                token = self.normalize(token)
 
     def _find_stop_words(self):
         all_words = []
@@ -103,25 +117,20 @@ class SearchEngine:
 
     def get_documents(self, word):
         i = bisect_left(self.dictionary, word)
-        if i != len(self.inverted_index):
+        if i != len(self.dictionary) and word == self.dictionary[i]:
             return self.inverted_index[i]
         else:
             return None
 
     def _create_dictionary(self):
         self.dictionary = []
-        for i in self.inverted_index:
-            print(i)
-
-        inverted_index_term = []
         for x in self.inverted_index:
             self.dictionary.append(x["term"])
-
 
     def create_inverted_index(self):
         self._load_documents()
         self._mine_tokens()
-        self._normalize()
+        self._normalize_tokens()
         self._find_stop_words()
         self._aggregate_inverted_index()
         self._create_dictionary()

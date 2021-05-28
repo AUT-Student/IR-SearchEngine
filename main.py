@@ -3,7 +3,10 @@ from search_engine import SearchEngine
 searchEngine = SearchEngine()
 
 # searchEngine.create_inverted_index()
-searchEngine.load_inverted_index()
+# searchEngine.load_inverted_index()
 
-print(searchEngine.get_documents("نهاد"))
-print(searchEngine.get_documents("نهاد‌های"))
+# print()
+# print(searchEngine.get_documents("مازوت"))
+
+token = "برترین‌ها"
+print(searchEngine.normalize(token))
