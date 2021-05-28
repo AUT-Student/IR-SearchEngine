@@ -1,6 +1,7 @@
 from openpyxl import load_workbook
 import re
 import numpy as np
+import pickle
 
 
 class SearchEngine:
@@ -86,7 +87,15 @@ class SearchEngine:
                 self.inverted_index[-1]["docs"].append(doc_id)
 
     def _save_inverted_index(self):
-        pass
+        with open('inverted_index', 'wb') as fp:
+            pickle.dump(self.inverted_index, fp)
+
+    def load_inverted_index(self):
+        with open('inverted_index', 'rb') as fp:
+            self.inverted_index = pickle.load(fp)
+
+    def get_documents(self, word):
+        return self.inverted_index[word]
 
     def create_inverted_index(self):
         self._load_documents()
