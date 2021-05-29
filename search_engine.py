@@ -74,9 +74,39 @@ class SearchEngine:
         token = re.sub(r"^می *", "", token)
         return token
 
+    @staticmethod
+    def _normalize_lemmatize(token):
+        past = "رفت"
+        present = "رو"
+        infinitive = past + "ن"
+
+        past_postfix = ["م", "یم", "ی", "ید", "", "ند"]
+        present_postfix = ["م", "یم", "ی", "ید", "د", "ند"]
+
+        for postfix in past_postfix:
+            verb = past + postfix
+            if verb == token:
+                # print("$$$$$")
+                # print(past)
+                # print(token)
+                # print("####")
+                return infinitive
+
+        for postfix in present_postfix:
+            verb = present + postfix
+            if verb == token:
+                # print("$$$$$")
+                # print(present)
+                # print(token)
+                # print("%%%%")
+                return infinitive
+
+        return token
+
     def normalize(self, token):
         token = self._normalize_remove_prefix(token)
         token = self._normalize_remove_postfix(token)
+        token = self._normalize_lemmatize(token)
         return token
 
     def _normalize_tokens(self):
@@ -148,6 +178,7 @@ class SearchEngine:
         self.dictionary = []
         for x in self.inverted_index:
             self.dictionary.append(x["term"])
+            print(x)
 
     def create_inverted_index(self):
         self._load_documents()

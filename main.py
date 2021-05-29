@@ -8,5 +8,5 @@ searchEngine.create_inverted_index()
 # print()
 # print(searchEngine.get_documents("مازوت"))
 
-token = "می‌خورد"
-print(searchEngine.normalize(token))
+# token = "رفتند"
+# print(searchEngine._normalize_lemmatize(token))
