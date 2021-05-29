@@ -23,6 +23,13 @@ class SearchEngine:
             self.content_list.append(data_content)
             self.url_list.append(data_url)
 
+    def _load_lemmatize(self):
+        file = open("lemmatize")
+        self.lemmatize = []
+        for line in file.readlines():
+            past, present = line.split(" ")
+            self.lemmatize.append({"past": past, "present": present})
+
     def _mine_tokens(self):
         self.tokens_list = []
 
@@ -74,32 +81,32 @@ class SearchEngine:
         token = re.sub(r"^می *", "", token)
         return token
 
-    @staticmethod
-    def _normalize_lemmatize(token):
-        past = "رفت"
-        present = "رو"
-        infinitive = past + "ن"
+    def _normalize_lemmatize(self, token):
+        for item in self.lemmatize:
+            past = item["past"]
+            present = item["present"]
+            infinitive = past + "ن"
 
-        past_postfix = ["م", "یم", "ی", "ید", "", "ند"]
-        present_postfix = ["م", "یم", "ی", "ید", "د", "ند"]
+            past_postfix = ["م", "یم", "ی", "ید", "", "ند"]
+            present_postfix = ["م", "یم", "ی", "ید", "د", "ند"]
 
-        for postfix in past_postfix:
-            verb = past + postfix
-            if verb == token:
-                # print("$$$$$")
-                # print(past)
-                # print(token)
-                # print("####")
-                return infinitive
+            for postfix in past_postfix:
+                verb = past + postfix
+                if verb == token:
+                    print("$$$$$")
+                    print(past)
+                    print(token)
+                    print("####")
+                    return infinitive
 
-        for postfix in present_postfix:
-            verb = present + postfix
-            if verb == token:
-                # print("$$$$$")
-                # print(present)
-                # print(token)
-                # print("%%%%")
-                return infinitive
+            for postfix in present_postfix:
+                verb = present + postfix
+                if verb == token:
+                    print("$$$$$")
+                    print(present)
+                    print(token)
+                    print("%%%%")
+                    return infinitive
 
         return token
 
@@ -162,6 +169,7 @@ class SearchEngine:
             pickle.dump(self.dictionary, fp)
 
     def load_inverted_index(self):
+        self._load_lemmatize()
         with open('inverted_index', 'rb') as fp:
             self.inverted_index = pickle.load(fp)
         with open('dictionary', 'rb') as fp:
@@ -178,14 +186,15 @@ class SearchEngine:
         self.dictionary = []
         for x in self.inverted_index:
             self.dictionary.append(x["term"])
-            print(x)
+            # if len(x["docs"]) > 10:
+            #     print(x)
 
     def create_inverted_index(self):
         self._load_documents()
+        self._load_lemmatize()
         self._mine_tokens()
         self._normalize_tokens()
         self._find_stop_words()
         self._aggregate_inverted_index()
         self._create_dictionary()
         self._save_inverted_index()
-
