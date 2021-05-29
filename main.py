@@ -4,7 +4,7 @@ searchEngine = SearchEngine()
 
 searchEngine._load_lemmatize()
 
-# searchEngine.create_inverted_index()
+searchEngine.create_inverted_index()
 # searchEngine.load_inverted_index()
 
 # print()

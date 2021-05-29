@@ -74,11 +74,14 @@ class SearchEngine:
         token = re.sub(r" *ها$", "", token)
         token = re.sub(r" *های$", "", token)
         token = re.sub(r" *ات$", "", token)
+        token = re.sub(u"\u200c" + r"$", "", token)
         return token
 
     @staticmethod
     def _normalize_remove_prefix(token):
-        token = re.sub(r"^می *", "", token)
+        token = re.sub(r"^می", "", token)
+        token = re.sub(r"^" + u"\u200c", "", token)
+        token = re.sub(r"^" + u"\u200f", "", token)
         return token
 
     def _normalize_lemmatize(self, token):
@@ -93,19 +96,11 @@ class SearchEngine:
             for postfix in past_postfix:
                 verb = past + postfix
                 if verb == token:
-                    print("$$$$$")
-                    print(past)
-                    print(token)
-                    print("####")
                     return infinitive
 
             for postfix in present_postfix:
                 verb = present + postfix
                 if verb == token:
-                    print("$$$$$")
-                    print(present)
-                    print(token)
-                    print("%%%%")
                     return infinitive
 
         return token
@@ -187,7 +182,7 @@ class SearchEngine:
         for x in self.inverted_index:
             self.dictionary.append(x["term"])
             # if len(x["docs"]) > 10:
-            #     print(x)
+            print(x["term"])
 
     def create_inverted_index(self):
         self._load_documents()
