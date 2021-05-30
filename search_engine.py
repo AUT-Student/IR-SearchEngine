@@ -3,6 +3,7 @@ from openpyxl import load_workbook
 import re
 import numpy as np
 import pickle
+from prettytable import PrettyTable
 
 
 class SearchEngine:
@@ -236,16 +237,21 @@ class SearchEngine:
         with open('./output_data/dictionary', 'rb') as fp:
             self.dictionary = pickle.load(fp)
 
-    def get_documents(self, word):
+    def _get_documents(self, word):
         word = self.preprocess(word)
         word = re.sub(" ", "", word)
         word = self.normalize(word)
-        print(word)
         i = bisect_left(self.dictionary, word)
         if i != len(self.dictionary) and word == self.dictionary[i]:
             return self.inverted_index[i]
         else:
             return None
+
+    def _get_context(self, doc_id):
+        return self.content_list[doc_id - 1]
+
+    def _get_url(self, doc_id):
+        return self.url_list[doc_id - 1]
 
     def _create_dictionary(self):
         self.dictionary = []
@@ -262,3 +268,25 @@ class SearchEngine:
         self._aggregate_inverted_index()
         self._create_dictionary()
         self._save_inverted_index()
+
+    def _search_single_token(self, token):
+        result = self._get_documents(token)
+        if result is None:
+            print("No Results ☹")
+        else:
+            term = result["term"]
+            documents = result["docs"]
+            print(f"Original  Query: {token}")
+            print(f"Processed Query: {term}")
+            print("Results:")
+            table = PrettyTable()
+            table.field_names = ["Row", "Doc ID", "URL"]
+            for i, doc_id in enumerate(documents):
+                table.add_row([i+1, doc_id, self._get_url(doc_id)])
+            print(table)
+
+    def search(self, query):
+        preprocessed_query = self.preprocess(query)
+        tokens = preprocessed_query.split(" ")
+        if len(tokens) == 1:
+            self._search_single_token(tokens[0])
