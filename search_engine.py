@@ -30,38 +30,81 @@ class SearchEngine:
             past, present = line.split(" ")
             self.lemmatize.append({"past": past, "present": present})
 
+    def _load_mokassar(self):
+        file = open("mokassar")
+        self.mokassar = []
+        for line in file.readlines():
+            plural, single = line.split(" ")
+            self.mokassar.append({"plural": plural, "single": single})
+
+    @staticmethod
+    def _preprocess(text):
+        text = re.sub('\.', ' ', text)
+        text = re.sub('،', ' ', text)
+        text = re.sub(',', ' ', text)
+        text = re.sub('\n', ' ', text)
+        text = re.sub(':', ' ', text)
+        text = re.sub('؛', ' ', text)
+        text = re.sub('"', ' ', text)
+        text = re.sub('“', ' ', text)
+        text = re.sub('”', ' ', text)
+        text = re.sub('\(', ' ', text)
+        text = re.sub('\)', ' ', text)
+        text = re.sub('\]', ' ', text)
+        text = re.sub('\[', ' ', text)
+        text = re.sub('-', ' ', text)
+        text = re.sub('\*', ' ', text)
+        text = re.sub('«', ' ', text)
+        text = re.sub('»', ' ', text)
+        text = re.sub('؟', ' ', text)
+        text = re.sub('\?', ' ', text)
+        text = re.sub('/', ' ', text)
+        text = re.sub('!', ' ', text)
+        text = re.sub('-', ' ', text)
+        text = re.sub('–', ' ', text)
+        text = re.sub('ـ', ' ', text)
+        text = re.sub('_', ' ', text)
+        text = re.sub('…', ' ', text)
+        text = re.sub('', ' ', text)
+
+        text = re.sub(u"\u064D" + r"", ' ', text)
+        text = re.sub(u"\u0650" + r"", ' ', text)
+        text = re.sub(u"\u064B" + r"", ' ', text)
+        text = re.sub(u"\u064E" + r"", ' ', text)
+        text = re.sub(u"\u064C" + r"", ' ', text)
+        text = re.sub(u"\u0651" + r"", ' ', text)
+
+        text = re.sub(r' +', ' ', text)
+
+        text = re.sub("ك", "ک", text)
+        text = re.sub("اً", "ا", text)
+        text = re.sub("أ", "ا", text)
+        text = re.sub("ؤً", "و", text)
+        text = re.sub("ة", "ه", text)
+        text = re.sub("ي", "ی", text)
+
+        text = re.sub("1", "۱", text)
+        text = re.sub("2", "۲", text)
+        text = re.sub("3", "۳", text)
+        text = re.sub("4", "۴", text)
+        text = re.sub("5", "۵", text)
+        text = re.sub("6", "۶", text)
+        text = re.sub("7", "۷", text)
+        text = re.sub("8", "۸", text)
+        text = re.sub("9", "۹", text)
+        text = re.sub("0", "۰", text)
+
+        return text
+
+
+
+
     def _mine_tokens(self):
         self.tokens_list = []
 
         for content in self.content_list:
             text = content
-            text = re.sub('\.', ' ', text)
-            text = re.sub('،', ' ', text)
-            text = re.sub(',', ' ', text)
-            text = re.sub('\n', ' ', text)
-            text = re.sub(':', ' ', text)
-            text = re.sub('؛', ' ', text)
-            text = re.sub('"', ' ', text)
-            text = re.sub('“', ' ', text)
-            text = re.sub('”', ' ', text)
-            text = re.sub('\(', ' ', text)
-            text = re.sub('\)', ' ', text)
-            text = re.sub('\]', ' ', text)
-            text = re.sub('\[', ' ', text)
-            text = re.sub('-', ' ', text)
-            text = re.sub('\*', ' ', text)
-            text = re.sub('«', ' ', text)
-            text = re.sub('»', ' ', text)
-            text = re.sub('؟', ' ', text)
-            text = re.sub('\?', ' ', text)
-            text = re.sub('/', ' ', text)
-            text = re.sub('!', ' ', text)
-            text = re.sub('-', ' ', text)
-            text = re.sub('–', ' ', text)
-            text = re.sub('ـ', ' ', text)
-            text = re.sub('…', ' ', text)
-
-            text = re.sub(r' +', ' ', text)
+            text = self._preprocess(text)
 
             tokens = re.split(" ", text)
             # sorted_tokens = sorted(tokens)
@@ -105,10 +148,18 @@ class SearchEngine:
 
         return token
 
+    def _normalize_mokassar(self, token):
+        for item in self.mokassar:
+            if token == item["plural"]:
+                return item["single"]
+
+        return token
+
     def normalize(self, token):
         token = self._normalize_remove_prefix(token)
         token = self._normalize_remove_postfix(token)
         token = self._normalize_lemmatize(token)
+        token = self._normalize_mokassar(token)
         return token
 
     def _normalize_tokens(self):
@@ -187,6 +238,7 @@ class SearchEngine:
     def create_inverted_index(self):
         self._load_documents()
         self._load_lemmatize()
+        self._load_mokassar()
         self._mine_tokens()
         self._normalize_tokens()
         self._find_stop_words()
