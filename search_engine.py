@@ -226,6 +226,10 @@ class SearchEngine:
             self.dictionary = pickle.load(fp)
 
     def get_documents(self, word):
+        word = self.preprocess(word)
+        word = re.sub(" ", "", word)
+        word = self.normalize(word)
+        print(word)
         i = bisect_left(self.dictionary, word)
         if i != len(self.dictionary) and word == self.dictionary[i]:
             return self.inverted_index[i]
