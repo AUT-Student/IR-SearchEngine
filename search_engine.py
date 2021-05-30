@@ -36,6 +36,18 @@ class SearchEngine:
             plural, single = line.split(" ")
             self.mokassar.append({"plural": plural, "single": single})
 
+    def _load_stop_normalization(self):
+        file = open("./input_data/stop_normalization")
+        self.stop_normalization = set()
+        for word in file.readlines():
+            self.stop_normalization.add(word.strip())
+
+    def _load_input_data(self):
+        self._load_documents()
+        self._load_lemmatize()
+        self._load_mokassar()
+        self._load_stop_normalization()
+
     @staticmethod
     def _preprocess_remove_redundant_symbol(text):
         text = re.sub('\.', ' ', text)
@@ -158,10 +170,11 @@ class SearchEngine:
         return token
 
     def normalize(self, token):
-        token = self._normalize_remove_prefix(token)
-        token = self._normalize_remove_postfix(token)
-        token = self._normalize_lemmatize(token)
-        token = self._normalize_mokassar(token)
+        if token not in self.stop_normalization:
+            token = self._normalize_remove_prefix(token)
+            token = self._normalize_remove_postfix(token)
+            token = self._normalize_lemmatize(token)
+            token = self._normalize_mokassar(token)
         return token
 
     def _normalize_tokens(self):
@@ -217,9 +230,7 @@ class SearchEngine:
             pickle.dump(self.dictionary, fp)
 
     def load_inverted_index(self):
-        self._load_documents()
-        self._load_lemmatize()
-        self._load_mokassar()
+        self._load_input_data()
         with open('./output_data/inverted_index', 'rb') as fp:
             self.inverted_index = pickle.load(fp)
         with open('./output_data/dictionary', 'rb') as fp:
@@ -244,9 +255,7 @@ class SearchEngine:
             print(x["term"])
 
     def create_inverted_index(self):
-        self._load_documents()
-        self._load_lemmatize()
-        self._load_mokassar()
+        self._load_input_data()
         self._mine_tokens()
         self._normalize_tokens()
         self._find_stop_words()
