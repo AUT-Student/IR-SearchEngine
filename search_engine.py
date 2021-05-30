@@ -9,7 +9,6 @@ from prettytable import PrettyTable
 class SearchEngine:
 
     def _load_documents(self):
-
         wb = load_workbook("./input_data/IR_Spring2021_ph12_7k.xlsx")
         sheet = wb.active
 
@@ -121,7 +120,6 @@ class SearchEngine:
         for content in self.content_list:
             text = content
             text = self.preprocess(text)
-
             tokens = re.split(" ", text)
             self.tokens_list.append(tokens)
 
@@ -132,14 +130,14 @@ class SearchEngine:
         token = re.sub(r" *ها$", "", token)
         token = re.sub(r" *های$", "", token)
         token = re.sub(r" *ات$", "", token)
-        token = re.sub(u"\u200c" + r"$", "", token)
+        token = re.sub(r"(\u200c)+$", "", token)
         return token
 
     @staticmethod
     def _normalize_remove_prefix(token):
         token = re.sub(r"^می", "", token)
-        token = re.sub(r"^" + u"\u200c", "", token)
-        token = re.sub(r"^" + u"\u200f", "", token)
+        token = re.sub(r"^(\u200c)+", "", token)
+        token = re.sub(r"^\u200f", "", token)
         return token
 
     def _normalize_lemmatize(self, token):
@@ -194,11 +192,13 @@ class SearchEngine:
             all_words += tokens
 
         values, counts = np.unique(all_words, return_counts=True)
-        self.stop_words_threshold = 1000
+        self.stop_words_threshold = 3500
         self.stop_words = []
 
         for i in range(len(values)):
             if counts[i] > self.stop_words_threshold:
+                print(values[i])
+                print(counts[i])
                 self.stop_words.append(values[i])
 
         self.stop_words = set(self.stop_words)
@@ -303,6 +303,9 @@ class SearchEngine:
                     new_pointers.append(pointer + 1)
                 else:
                     new_pointers.append(pointer)
+            else:
+                new_pointers.append(pointer)
+
         return new_pointers
 
     @staticmethod
@@ -337,8 +340,7 @@ class SearchEngine:
             results.append({"doc_id": smallest_doc_id, "number": smallest_doc_id_number})
             pointer_list = self._next_pointer(pointer_list, doc_id_list, smallest_doc_id)
 
-        results = sorted(results, key=lambda x: x["number"])
-        # print(f"Original  Query: {token}")
+        results = sorted(results, key=lambda x: -x["number"])
         table = PrettyTable()
         table.field_names = ["Row", "Score", "Doc ID", "URL"]
         for i, result in enumerate(results):

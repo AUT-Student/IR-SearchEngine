@@ -5,9 +5,10 @@ searchEngine = SearchEngine()
 # searchEngine.create_inverted_index()
 searchEngine.load_inverted_index()
 
-# print()
 
-searchEngine.search("میدان فوتبال")
-
-# token = "رفتند"
-# print(searchEngine._normalize_lemmatize(token))
+while True:
+    query = input()
+    if query == "Exit":
+        break
+    else:
+        searchEngine.search(query)
