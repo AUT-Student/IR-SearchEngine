@@ -23,14 +23,14 @@ class SearchEngine:
             self.url_list.append(data_url)
 
     def _load_lemmatize(self):
-        file = open("lemmatize")
+        file = open("./input_data/lemmatize")
         self.lemmatize = []
         for line in file.readlines():
             past, present = line.split(" ")
             self.lemmatize.append({"past": past, "present": present})
 
     def _load_mokassar(self):
-        file = open("mokassar")
+        file = open("./input_data/mokassar")
         self.mokassar = []
         for line in file.readlines():
             plural, single = line.split(" ")
@@ -211,18 +211,18 @@ class SearchEngine:
             previous_term = current_term
 
     def _save_inverted_index(self):
-        with open('inverted_index', 'wb') as fp:
+        with open('./output_data/inverted_index', 'wb') as fp:
             pickle.dump(self.inverted_index, fp)
-        with open('dictionary', 'wb') as fp:
+        with open('./output_data/dictionary', 'wb') as fp:
             pickle.dump(self.dictionary, fp)
 
     def load_inverted_index(self):
         self._load_documents()
         self._load_lemmatize()
         self._load_mokassar()
-        with open('inverted_index', 'rb') as fp:
+        with open('./output_data/inverted_index', 'rb') as fp:
             self.inverted_index = pickle.load(fp)
-        with open('dictionary', 'rb') as fp:
+        with open('./output_data/dictionary', 'rb') as fp:
             self.dictionary = pickle.load(fp)
 
     def get_documents(self, word):
