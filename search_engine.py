@@ -272,6 +272,7 @@ class SearchEngine:
     def _search_single_token(self, token):
         result = self._get_documents(token)
         if result is None:
+            print(f"Query: {token}")
             print("No Results ☹")
         else:
             term = result["term"]
@@ -285,8 +286,70 @@ class SearchEngine:
                 table.add_row([i+1, doc_id, self._get_url(doc_id)])
             print(table)
 
+    @staticmethod
+    def _is_finish_searching(doc_id_list, pointer_list):
+        for i in range(len(doc_id_list)):
+            if pointer_list[i] < len(doc_id_list[i]):
+                return False
+        return True
+
+    @staticmethod
+    def _next_pointer(pointer_list, doc_id_list, smallest_doc_id):
+        new_pointers = []
+        for i, pointer in enumerate(pointer_list):
+            if pointer < len(doc_id_list[i]):
+                doc_id = doc_id_list[i][pointer]
+                if doc_id == smallest_doc_id:
+                    new_pointers.append(pointer + 1)
+                else:
+                    new_pointers.append(pointer)
+        return new_pointers
+
+    @staticmethod
+    def _get_smallest_doc_id(doc_id_list, pointer_list):
+        smallest_doc_id = 1000 * 1000 * 1000
+        smallest_doc_id_number = 0
+        for i, pointer in enumerate(pointer_list):
+            if pointer < len(doc_id_list[i]):
+                doc_id = doc_id_list[i][pointer]
+                if doc_id < smallest_doc_id:
+                    smallest_doc_id = doc_id
+                    smallest_doc_id_number = 1
+                elif doc_id == smallest_doc_id:
+                    smallest_doc_id_number += 1
+
+        return smallest_doc_id, smallest_doc_id_number
+
+    def _search_multi_token(self, tokens):
+        doc_id_list = []
+        pointer_list = []
+        for token in tokens:
+            documents = self._get_documents(token)
+            pointer_list.append(0)
+            if documents is None:
+                doc_id_list.append([])
+            else:
+                doc_id_list.append(documents["docs"])
+
+        results = []
+        while not self._is_finish_searching(doc_id_list, pointer_list):
+            smallest_doc_id, smallest_doc_id_number = self._get_smallest_doc_id(doc_id_list, pointer_list)
+            results.append({"doc_id": smallest_doc_id, "number": smallest_doc_id_number})
+            pointer_list = self._next_pointer(pointer_list, doc_id_list, smallest_doc_id)
+
+        results = sorted(results, key=lambda x: x["number"])
+        # print(f"Original  Query: {token}")
+        table = PrettyTable()
+        table.field_names = ["Row", "Score", "Doc ID", "URL"]
+        for i, result in enumerate(results):
+            doc_id = result["doc_id"]
+            table.add_row([i+1, result["number"], doc_id, self._get_url(doc_id)])
+        print(table)
+
     def search(self, query):
         preprocessed_query = self.preprocess(query)
         tokens = preprocessed_query.split(" ")
         if len(tokens) == 1:
             self._search_single_token(tokens[0])
+        else:
+            self._search_multi_token(tokens)

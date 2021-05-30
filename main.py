@@ -7,7 +7,7 @@ searchEngine.load_inverted_index()
 
 # print()
 
-searchEngine.search("میدانdd")
+searchEngine.search("میدان فوتبال")
 
 # token = "رفتند"
 # print(searchEngine._normalize_lemmatize(token))
