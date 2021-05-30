@@ -1,5 +1,4 @@
 from bisect import bisect_left
-
 from openpyxl import load_workbook
 import re
 import numpy as np
@@ -38,7 +37,7 @@ class SearchEngine:
             self.mokassar.append({"plural": plural, "single": single})
 
     @staticmethod
-    def _preprocess(text):
+    def _preprocess_remove_redundant_symbol(text):
         text = re.sub('\.', ' ', text)
         text = re.sub('،', ' ', text)
         text = re.sub(',', ' ', text)
@@ -65,17 +64,19 @@ class SearchEngine:
         text = re.sub('ـ', ' ', text)
         text = re.sub('_', ' ', text)
         text = re.sub('…', ' ', text)
-        text = re.sub('', ' ', text)
 
-        text = re.sub(u"\u064D" + r"", ' ', text)
-        text = re.sub(u"\u0650" + r"", ' ', text)
-        text = re.sub(u"\u064B" + r"", ' ', text)
-        text = re.sub(u"\u064E" + r"", ' ', text)
-        text = re.sub(u"\u064C" + r"", ' ', text)
-        text = re.sub(u"\u0651" + r"", ' ', text)
+        text = re.sub(u"\u064D", ' ', text)
+        text = re.sub(u"\u0650", ' ', text)
+        text = re.sub(u"\u064B", ' ', text)
+        text = re.sub(u"\u064E", ' ', text)
+        text = re.sub(u"\u064C", ' ', text)
+        text = re.sub(u"\u0651", ' ', text)
 
         text = re.sub(r' +', ' ', text)
+        return text
 
+    @staticmethod
+    def _preprocess_equalize(text):
         text = re.sub("ك", "ک", text)
         text = re.sub("اً", "ا", text)
         text = re.sub("أ", "ا", text)
@@ -93,21 +94,22 @@ class SearchEngine:
         text = re.sub("8", "۸", text)
         text = re.sub("9", "۹", text)
         text = re.sub("0", "۰", text)
-
         return text
 
-
-
+    @staticmethod
+    def preprocess(text):
+        text = SearchEngine._preprocess_remove_redundant_symbol(text)
+        text = SearchEngine._preprocess_equalize(text)
+        return text
 
     def _mine_tokens(self):
         self.tokens_list = []
 
         for content in self.content_list:
             text = content
-            text = self._preprocess(text)
+            text = self.preprocess(text)
 
             tokens = re.split(" ", text)
-            # sorted_tokens = sorted(tokens)
             self.tokens_list.append(tokens)
 
     @staticmethod
@@ -215,7 +217,9 @@ class SearchEngine:
             pickle.dump(self.dictionary, fp)
 
     def load_inverted_index(self):
+        self._load_documents()
         self._load_lemmatize()
+        self._load_mokassar()
         with open('inverted_index', 'rb') as fp:
             self.inverted_index = pickle.load(fp)
         with open('dictionary', 'rb') as fp:
