@@ -6,6 +6,7 @@ import pickle
 from prettytable import PrettyTable
 from math import log10, sqrt
 from heapq import heapify, heappush, heappop
+import timeit
 
 
 class SearchEngine:
@@ -19,7 +20,7 @@ class SearchEngine:
         self.length_list = []
         self.NUMBER_DOCS = 7000
         self.NUMBER_RESULTS = 20
-        self.HEAP_ENABLE = True
+        self.HEAP_ENABLE = False
         self.INDEX_ELIMINATION_ENABLE = True
         self.CHAMPION_LIST_ENABLE = True
 
@@ -347,6 +348,7 @@ class SearchEngine:
         return smallest_doc_id, smallest_doc_id_number
 
     def _search_multi_token(self, tokens):
+        start = timeit.default_timer()
         score_dictionary = {}
 
         unique_tokens, counts = np.unique(tokens, return_counts=True)
@@ -396,12 +398,15 @@ class SearchEngine:
             else:
                 final_results = results[:self.NUMBER_RESULTS]
 
+        stop = timeit.default_timer()
+
         table = PrettyTable()
         table.field_names = ["Row", "Score", "Doc ID", "URL"]
         for i, result in enumerate(final_results):
             table.add_row([i + 1, result["score"], result["doc_id"], result["URL"]])
 
         print(table)
+        print(f"Time: {(stop - start)*1000} mS ")
 
     def search(self, query):
         preprocessed_query = self.preprocess(query)
