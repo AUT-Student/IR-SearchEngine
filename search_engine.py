@@ -210,21 +210,21 @@ class SearchEngine:
 
         for item in self.inverted_index:
             df = len(item["docs"])
-            new_idf = log10(self.number_docs / df)
-            item["idf"] = new_idf
+            idf = log10(self.number_docs / df)
+            item["idf"] = idf
             print(item)
 
     def _aggregate_inverted_index(self):
         term_doc_list = []
         for i, tokens in enumerate(self.tokens_list):
-            unique_tokens_list, unique_token_counts = np.unique(tokens, return_counts=True)
+            unique_tokens_list, unique_tokens_counts = np.unique(tokens, return_counts=True)
 
             # unique_tokens_list = set(tokens)
             # unique_tokens_list -= self.stop_words
-            for i, word in enumerate(unique_tokens_list):
+            for j, word in enumerate(unique_tokens_list):
                 if word not in self.stop_words:
-                    new_tf = 1 + log10(unique_tokens_list[i])
-                    term_doc_list.append({'term': word, 'doc': i + 1, 'tf': new_tf})
+                    tf = 1 + log10(unique_tokens_counts[j])
+                    term_doc_list.append({'term': word, 'doc': i + 1, 'tf': tf})
 
         sorted_term_doc_list = sorted(term_doc_list, key=lambda x: x["term"])
 
@@ -233,9 +233,10 @@ class SearchEngine:
         for term_doc in sorted_term_doc_list:
             current_term = term_doc["term"]
             doc_id = term_doc["doc"]
+            tf = term_doc["tf"]
             if previous_term != current_term:
                 self.inverted_index.append({"term": current_term, "docs": []})
-            self.inverted_index[-1]["docs"].append(doc_id)
+            self.inverted_index[-1]["docs"].append({"id": doc_id, "tf": tf})
 
             previous_term = current_term
 
@@ -292,7 +293,10 @@ class SearchEngine:
             print("No Results ☹")
         else:
             term = result["term"]
-            documents = result["docs"]
+            documents = []
+            for doc in result["docs"]:
+                documents.append(doc["id"])
+
             print(f"Original  Query: {token}")
             print(f"Processed Query: {term}")
             print("Results:")
@@ -348,7 +352,10 @@ class SearchEngine:
             if documents is None:
                 doc_id_list.append([])
             else:
-                doc_id_list.append(documents["docs"])
+                new_documents = []
+                for doc in documents["docs"]:
+                    new_documents.append(doc["id"])
+                doc_id_list.append(new_documents)
 
         results = []
         while not self._is_finish_searching(doc_id_list, pointer_list):
