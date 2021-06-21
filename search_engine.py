@@ -17,10 +17,13 @@ class SearchEngine:
         self.content_list = []
         self.url_list = []
         self.length_list = []
-        self.number_docs = 7000
-        self.number_results = 20
+        self.NUMBER_DOCS = 7000
+        self.NUMBER_RESULTS = 20
+        self.HEAP_ENABLE = True
+        self.INDEX_ELIMINATION_ENABLE = True
+        self.CHAMPION_LIST_ENABLE = True
 
-        for i in range(2, self.number_docs + 2):
+        for i in range(2, self.NUMBER_DOCS + 2):
             data_id = int(sheet.cell(i, 1).value)
             data_content = sheet.cell(i, 2).value
             data_url = sheet.cell(i, 3).value
@@ -213,13 +216,13 @@ class SearchEngine:
 
         for item in self.inverted_index:
             df = len(item["docs"])
-            idf = log10(self.number_docs / df)
+            idf = log10(self.NUMBER_DOCS / df)
             item["idf"] = idf
             print(item)
 
     def _calculate_length(self):
         self.length_list = []
-        for i in range(self.number_docs):
+        for i in range(self.NUMBER_DOCS):
             self.length_list.append(0)
 
         for item in self.inverted_index:
@@ -229,7 +232,7 @@ class SearchEngine:
                 doc_tf = doc["tf"]
                 self.length_list[doc_id - 1] += idf * doc_tf
 
-        for i in range(self.number_docs):
+        for i in range(self.NUMBER_DOCS):
             self.length_list[i] = sqrt(self.length_list[i])
 
     def _aggregate_inverted_index(self):
@@ -365,21 +368,38 @@ class SearchEngine:
                         score_dictionary[doc_id] = new_score
 
         results = []
-        heapify(results)
+        if self.HEAP_ENABLE:
+            heapify(results)
+
         for item in score_dictionary:
             result = {"doc_id": item, "URL": self._get_url(item),
                       "score": score_dictionary[item] / self.length_list[item - 1]}
-            heappush(results, (-result["score"], (item, result)))
+
+            if self.HEAP_ENABLE:
+                heappush(results, (-result["score"], (item, result)))
+            else:
+                results.append(result)
+
+        final_results = []
+        if self.HEAP_ENABLE:
+            for i in range(self.NUMBER_RESULTS):
+                if i >= len(score_dictionary):
+                    break
+                heap_item = heappop(results)
+                if heap_item is not None:
+                    result = heap_item[1][1]
+                    final_results.append(result)
+        else:
+            results = sorted(results, key=lambda x: -x["score"])
+            if len(results) < self.NUMBER_RESULTS:
+                final_results = results
+            else:
+                final_results = results[:self.NUMBER_RESULTS]
 
         table = PrettyTable()
         table.field_names = ["Row", "Score", "Doc ID", "URL"]
-        for i in range(self.number_results):
-            if i >= len(score_dictionary):
-                break
-            heap_item = heappop(results)
-            if heap_item is not None:
-                result = heap_item[1][1]
-                table.add_row([i + 1, result["score"], result["doc_id"], result["URL"]])
+        for i, result in enumerate(final_results):
+            table.add_row([i + 1, result["score"], result["doc_id"], result["URL"]])
 
         print(table)
 
