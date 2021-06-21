@@ -217,10 +217,14 @@ class SearchEngine:
     def _aggregate_inverted_index(self):
         term_doc_list = []
         for i, tokens in enumerate(self.tokens_list):
-            unique_tokens_list = set(tokens)
-            unique_tokens_list -= self.stop_words
-            for word in unique_tokens_list:
-                term_doc_list.append({'term': word, 'doc': i + 1})
+            unique_tokens_list, unique_token_counts = np.unique(tokens, return_counts=True)
+
+            # unique_tokens_list = set(tokens)
+            # unique_tokens_list -= self.stop_words
+            for i, word in enumerate(unique_tokens_list):
+                if word not in self.stop_words:
+                    new_tf = 1 + log10(unique_tokens_list[i])
+                    term_doc_list.append({'term': word, 'doc': i + 1, 'tf': new_tf})
 
         sorted_term_doc_list = sorted(term_doc_list, key=lambda x: x["term"])
 
