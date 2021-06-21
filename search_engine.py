@@ -304,26 +304,6 @@ class SearchEngine:
         self._calculate_length()
         self._save_inverted_index()
 
-    def _search_single_token(self, token):
-        result = self._get_documents(token)
-        if result is None:
-            print(f"Query: {token}")
-            print("No Results ☹")
-        else:
-            term = result["term"]
-            documents = []
-            for doc in result["docs"]:
-                documents.append(doc["id"])
-
-            print(f"Original  Query: {token}")
-            print(f"Processed Query: {term}")
-            print("Results:")
-            table = PrettyTable()
-            table.field_names = ["Row", "Doc ID", "URL"]
-            for i, doc_id in enumerate(documents):
-                table.add_row([i + 1, doc_id, self._get_url(doc_id)])
-            print(table)
-
     @staticmethod
     def _is_finish_searching(doc_id_list, pointer_list):
         for i in range(len(doc_id_list)):
@@ -398,7 +378,4 @@ class SearchEngine:
     def search(self, query):
         preprocessed_query = self.preprocess(query)
         tokens = preprocessed_query.split(" ")
-        if len(tokens) == 1:
-            self._search_single_token(tokens[0])
-        else:
-            self._search_multi_token(tokens)
+        self._search_multi_token(tokens)
