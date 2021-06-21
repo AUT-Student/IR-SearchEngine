@@ -4,6 +4,7 @@ import re
 import numpy as np
 import pickle
 from prettytable import PrettyTable
+from math import log10
 
 
 class SearchEngine:
@@ -14,8 +15,9 @@ class SearchEngine:
 
         self.content_list = []
         self.url_list = []
+        self.number_docs = 7000
 
-        for i in range(2, 7002):
+        for i in range(2, self.number_docs + 2):
             data_id = int(sheet.cell(i, 1).value)
             data_content = sheet.cell(i, 2).value
             data_url = sheet.cell(i, 3).value
@@ -203,6 +205,15 @@ class SearchEngine:
 
         self.stop_words = set(self.stop_words)
 
+    def _calculate_idf(self):
+        print(self.inverted_index)
+
+        for item in self.inverted_index:
+            df = len(item["docs"])
+            new_idf = log10(self.number_docs / df)
+            item["idf"] = new_idf
+            print(item)
+
     def _aggregate_inverted_index(self):
         term_doc_list = []
         for i, tokens in enumerate(self.tokens_list):
@@ -267,6 +278,7 @@ class SearchEngine:
         self._find_stop_words()
         self._aggregate_inverted_index()
         self._create_dictionary()
+        self._calculate_idf()
         self._save_inverted_index()
 
     def _search_single_token(self, token):
