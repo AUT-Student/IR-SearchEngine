@@ -4,7 +4,7 @@ import re
 import numpy as np
 import pickle
 from prettytable import PrettyTable
-from math import log10
+from math import log10, sqrt
 
 
 class SearchEngine:
@@ -15,6 +15,7 @@ class SearchEngine:
 
         self.content_list = []
         self.url_list = []
+        self.length_list = []
         self.number_docs = 7000
 
         for i in range(2, self.number_docs + 2):
@@ -214,6 +215,21 @@ class SearchEngine:
             item["idf"] = idf
             print(item)
 
+    def _calculate_length(self):
+        self.length_list = []
+        for i in range(self.number_docs):
+            self.length_list.append(0)
+
+        for item in self.inverted_index:
+            idf = item["idf"]
+            for doc in item["docs"]:
+                doc_id = doc["id"]
+                doc_tf = doc["tf"]
+                self.length_list[doc_id - 1] += idf * doc_tf
+
+        for i in range(self.number_docs):
+            self.length_list[i] = sqrt(self.length_list[i])
+
     def _aggregate_inverted_index(self):
         term_doc_list = []
         for i, tokens in enumerate(self.tokens_list):
@@ -252,6 +268,7 @@ class SearchEngine:
             self.inverted_index = pickle.load(fp)
         with open('./output_data/dictionary', 'rb') as fp:
             self.dictionary = pickle.load(fp)
+        self._calculate_length()
 
     def _get_documents(self, word):
         word = self.preprocess(word)
@@ -284,6 +301,7 @@ class SearchEngine:
         self._aggregate_inverted_index()
         self._create_dictionary()
         self._calculate_idf()
+        self._calculate_length()
         self._save_inverted_index()
 
     def _search_single_token(self, token):
@@ -303,7 +321,7 @@ class SearchEngine:
             table = PrettyTable()
             table.field_names = ["Row", "Doc ID", "URL"]
             for i, doc_id in enumerate(documents):
-                table.add_row([i+1, doc_id, self._get_url(doc_id)])
+                table.add_row([i + 1, doc_id, self._get_url(doc_id)])
             print(table)
 
     @staticmethod
@@ -344,31 +362,37 @@ class SearchEngine:
         return smallest_doc_id, smallest_doc_id_number
 
     def _search_multi_token(self, tokens):
-        doc_id_list = []
-        pointer_list = []
-        for token in tokens:
+        score_dictionary = {}
+
+        unique_tokens, counts = np.unique(tokens, return_counts=True)
+
+        for i, token in enumerate(unique_tokens):
             documents = self._get_documents(token)
-            pointer_list.append(0)
-            if documents is None:
-                doc_id_list.append([])
-            else:
-                new_documents = []
+            idf = documents["idf"]
+            query_tf = 1 + log10(counts[i])
+
+            if documents is not None:
                 for doc in documents["docs"]:
-                    new_documents.append(doc["id"])
-                doc_id_list.append(new_documents)
+                    doc_id = doc["id"]
+                    doc_tf = doc["tf"]
+
+                    new_score = doc_tf * idf * query_tf
+                    if doc_id in score_dictionary:
+                        score_dictionary[doc_id] += new_score
+                    else:
+                        score_dictionary[doc_id] = new_score
 
         results = []
-        while not self._is_finish_searching(doc_id_list, pointer_list):
-            smallest_doc_id, smallest_doc_id_number = self._get_smallest_doc_id(doc_id_list, pointer_list)
-            results.append({"doc_id": smallest_doc_id, "number": smallest_doc_id_number})
-            pointer_list = self._next_pointer(pointer_list, doc_id_list, smallest_doc_id)
+        for item in score_dictionary:
+            results.append({"doc_id": item, "score": score_dictionary[item] / self.length_list[item - 1]
+                            , "URL": self._get_url(item)})
 
-        results = sorted(results, key=lambda x: -x["number"])
+        results = sorted(results, key=lambda x: -x["score"])
         table = PrettyTable()
         table.field_names = ["Row", "Score", "Doc ID", "URL"]
-        for i, result in enumerate(results):
-            doc_id = result["doc_id"]
-            table.add_row([i+1, result["number"], doc_id, self._get_url(doc_id)])
+        for row, result in enumerate(results):
+            table.add_row([row + 1, result["score"], result["doc_id"], result["URL"]])
+
         print(table)
 
     def search(self, query):
