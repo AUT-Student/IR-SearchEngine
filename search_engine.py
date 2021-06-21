@@ -5,6 +5,7 @@ import numpy as np
 import pickle
 from prettytable import PrettyTable
 from math import log10, sqrt
+from heapq import heapify, heappush, heappop
 
 
 class SearchEngine:
@@ -17,6 +18,7 @@ class SearchEngine:
         self.url_list = []
         self.length_list = []
         self.number_docs = 7000
+        self.number_results = 20
 
         for i in range(2, self.number_docs + 2):
             data_id = int(sheet.cell(i, 1).value)
@@ -348,10 +350,10 @@ class SearchEngine:
 
         for i, token in enumerate(unique_tokens):
             documents = self._get_documents(token)
-            idf = documents["idf"]
-            query_tf = 1 + log10(counts[i])
 
             if documents is not None:
+                idf = documents["idf"]
+                query_tf = 1 + log10(counts[i])
                 for doc in documents["docs"]:
                     doc_id = doc["id"]
                     doc_tf = doc["tf"]
@@ -363,15 +365,21 @@ class SearchEngine:
                         score_dictionary[doc_id] = new_score
 
         results = []
+        heapify(results)
         for item in score_dictionary:
-            results.append({"doc_id": item, "score": score_dictionary[item] / self.length_list[item - 1]
-                            , "URL": self._get_url(item)})
+            result = {"doc_id": item, "URL": self._get_url(item),
+                      "score": score_dictionary[item] / self.length_list[item - 1]}
+            heappush(results, (-result["score"], (item, result)))
 
-        results = sorted(results, key=lambda x: -x["score"])
         table = PrettyTable()
         table.field_names = ["Row", "Score", "Doc ID", "URL"]
-        for row, result in enumerate(results):
-            table.add_row([row + 1, result["score"], result["doc_id"], result["URL"]])
+        for i in range(self.number_results):
+            if i >= len(score_dictionary):
+                break
+            heap_item = heappop(results)
+            if heap_item is not None:
+                result = heap_item[1][1]
+                table.add_row([i + 1, result["score"], result["doc_id"], result["URL"]])
 
         print(table)
 
