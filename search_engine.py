@@ -373,7 +373,12 @@ class SearchEngine:
             if documents is not None:
                 idf = documents["idf"]
                 query_tf = 1 + log10(counts[i])
-                for doc in documents["docs"]:
+                if self.CHAMPION_LIST_ENABLE:
+                    docs = documents["champion_docs"]
+                else:
+                    docs = documents["docs"]
+
+                for doc in docs:
                     doc_id = doc["id"]
                     doc_tf = doc["tf"]
 
