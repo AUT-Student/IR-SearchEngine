@@ -21,7 +21,7 @@ class SearchEngine:
         self.NUMBER_DOCS = 7000
         self.NUMBER_RESULTS = 20
         self.NUMBER_DOCS_CHAMPION_LIST = 40
-        self.HEAP_ENABLE = False
+        self.HEAP_ENABLE = True
         self.CHAMPION_LIST_ENABLE = True
 
         for i in range(2, self.NUMBER_DOCS + 2):
