@@ -20,8 +20,8 @@ class SearchEngine:
         self.length_list = []
         self.NUMBER_DOCS = 7000
         self.NUMBER_RESULTS = 20
+        self.NUMBER_DOCS_CHAMPION_LIST = 40
         self.HEAP_ENABLE = False
-        self.INDEX_ELIMINATION_ENABLE = True
         self.CHAMPION_LIST_ENABLE = True
 
         for i in range(2, self.NUMBER_DOCS + 2):
@@ -299,6 +299,20 @@ class SearchEngine:
             # if len(x["docs"]) > 10:
             print(x["term"])
 
+    def _create_champion_list(self):
+        for term_doc in self.inverted_index:
+            if len(term_doc["docs"]) <= self.NUMBER_DOCS_CHAMPION_LIST:
+                term_doc["champion_docs"] = term_doc["docs"]
+            else:
+                docs = term_doc["docs"]
+                for doc in docs:
+                    doc["score"] = 1.0 * doc["tf"] / self.length_list[doc["id"] - 1]
+
+                sorted_doc = sorted(docs, key=lambda x: -x["score"])[:self.NUMBER_DOCS_CHAMPION_LIST]
+                for doc in sorted_doc:
+                    del doc["score"]
+                term_doc["champion_docs"] = sorted(sorted_doc, key=lambda x: x["id"])
+
     def create_inverted_index(self):
         self._load_input_data()
         self._mine_tokens()
@@ -308,6 +322,7 @@ class SearchEngine:
         self._create_dictionary()
         self._calculate_idf()
         self._calculate_length()
+        self._create_champion_list()
         self._save_inverted_index()
 
     @staticmethod
@@ -355,7 +370,6 @@ class SearchEngine:
 
         for i, token in enumerate(unique_tokens):
             documents = self._get_documents(token)
-
             if documents is not None:
                 idf = documents["idf"]
                 query_tf = 1 + log10(counts[i])
