@@ -12,24 +12,50 @@ import timeit
 class SearchEngine:
 
     def _load_documents(self):
-        wb = load_workbook("./input_data/IR_Spring2021_ph12_7k.xlsx")
-        sheet = wb.active
 
         self.content_list = []
         self.url_list = []
         self.length_list = []
-        self.NUMBER_DOCS = 7000
+        self.topic_list = []
+        self.NUMBER_DOCS = 0
         self.NUMBER_RESULTS = 20
         self.NUMBER_DOCS_CHAMPION_LIST = 40
         self.HEAP_ENABLE = True
         self.CHAMPION_LIST_ENABLE = True
 
-        for i in range(2, self.NUMBER_DOCS + 2):
-            data_id = int(sheet.cell(i, 1).value)
-            data_content = sheet.cell(i, 2).value
-            data_url = sheet.cell(i, 3).value
-            self.content_list.append(data_content)
-            self.url_list.append(data_url)
+
+        input_file_path = [
+            "./input_data/IR00_3_11k News.xlsx",
+            "./input_data/IR00_3_17k News.xlsx",
+            "./input_data/IR00_3_20k News.xlsx"
+                           ]
+        for path in input_file_path:
+            print(path)
+            wb = load_workbook(path)
+            sheet = wb.active
+
+            i = 1
+            while True:
+
+                try:
+                    i += 1
+                    data_id = int(sheet.cell(i, 1).value)
+
+                    data_content = sheet.cell(i, 2).value
+
+                    data_topic = sheet.cell(i, 3).value
+
+                    data_url = sheet.cell(i, 4).value
+                    self.content_list.append(data_content)
+                    self.topic_list.append(data_topic)
+                    self.url_list.append(data_url)
+                    self.NUMBER_DOCS += 1
+                    if self.NUMBER_DOCS%5000 == 0:
+                        print(f"Number Docs = {self.NUMBER_DOCS}")
+
+                except Exception:
+                    break
+
 
     def _load_lemmatize(self):
         file = open("./input_data/lemmatize")
