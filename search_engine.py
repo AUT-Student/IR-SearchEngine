@@ -1,4 +1,6 @@
 from bisect import bisect_left
+
+import numpy as np
 from openpyxl import load_workbook
 import re
 import numpy as np
@@ -228,7 +230,7 @@ class SearchEngine:
         self.stop_words = []
 
         for term_doc in self.inverted_index:
-            if 1000 < len(term_doc["docs"]) < 20000:
+            if 500 < len(term_doc["docs"]) < 20000:
                 new_inverted_index.append(term_doc)
             else:
                 self.stop_words.append(term_doc["term"])
@@ -287,8 +289,6 @@ class SearchEngine:
             pickle.dump(self.inverted_index, fp)
         with open('./output_data/dictionary', 'wb') as fp:
             pickle.dump(self.dictionary, fp)
-        with open('./output_data/document_vectors', 'wb') as fp:
-            pickle.dump(self.document_vectors, fp)
 
     def load_inverted_index(self):
         self._load_input_data()
@@ -296,9 +296,18 @@ class SearchEngine:
             self.inverted_index = pickle.load(fp)
         with open('./output_data/dictionary', 'rb') as fp:
             self.dictionary = pickle.load(fp)
-        with open('./output_data/document_vectors', 'rb') as fp:
-            self.document_vectors = pickle.load(fp)
+        self._create_document_vectors()
+
         self._calculate_length()
+
+        # zero = np.zeros(len(self.inverted_index))
+        # for id, vec in enumerate(self.document_vectors):
+        #     if np.array_equal(zero, vec):
+        #         print(self.url_list[id])
+        self._nearest_neighbours(2500)
+        print(len(self.inverted_index))
+        print(len(self.dictionary))
+        print(len(self.dictionary))
 
     def _get_documents(self, word):
         word = self.preprocess(word)
@@ -340,10 +349,7 @@ class SearchEngine:
     def _create_document_vectors(self):
         self.document_vectors = []
         for i in range(self.NUMBER_DOCS):
-            new_vector = []
-            for j in range(len(self.dictionary)):
-                new_vector.append(0)
-
+            new_vector = np.zeros(len(self.dictionary))
             self.document_vectors.append(new_vector)
 
         term_id = 0
@@ -353,6 +359,23 @@ class SearchEngine:
                 doc_tf = doc["tf"]
                 self.document_vectors[doc_id - 1][term_id] = doc_tf
             term_id += 1
+
+    def _nearest_neighbours(self, doc_id):
+        vector = self.document_vectors[doc_id-1]
+        neighbours = []
+        for id in range(1, self.NUMBER_DOCS+1):
+            # if id != doc_id:
+            vector2 = self.document_vectors[id-1]
+            dist = np.linalg.norm(vector - vector2)
+            neighbours.append({"doc_id": id, "dist": dist})
+
+        sorted_neighbours = sorted(neighbours, key=lambda x: x["dist"])
+        print(self.url_list[doc_id - 1])
+        for i in range(10):
+            id = sorted_neighbours[i]["doc_id"]
+            print(sorted_neighbours[i])
+            print(self.url_list[id - 1])
+            print(self.topic_list[id-1])
 
     def create_inverted_index(self):
         self._load_input_data()
@@ -470,9 +493,6 @@ class SearchEngine:
         print(f"Time: {(stop - start)*1000} mS ")
 
     def search(self, query):
-        print(self.document_vectors[0])
-        print(self.document_vectors[1])
-        print(self.document_vectors[2])
         preprocessed_query = self.preprocess(query)
         tokens = preprocessed_query.split(" ")
         self._search_multi_token(tokens)
