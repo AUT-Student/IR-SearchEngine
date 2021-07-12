@@ -30,7 +30,6 @@ class SearchEngine:
             "./input_data/IR00_3_20k News.xlsx"
                            ]
         for path in input_file_path:
-            print(path)
             wb = load_workbook(path)
             sheet = wb.active
 
@@ -38,6 +37,8 @@ class SearchEngine:
             while True:
 
                 try:
+                    # if self.NUMBER_DOCS == 7000:
+                    #     break
                     i += 1
                     data_id = int(sheet.cell(i, 1).value)
 
@@ -52,6 +53,7 @@ class SearchEngine:
                     self.NUMBER_DOCS += 1
                     if self.NUMBER_DOCS%5000 == 0:
                         print(f"Number Docs = {self.NUMBER_DOCS}")
+
 
                 except Exception:
                     break
@@ -222,30 +224,43 @@ class SearchEngine:
         self.tokens_list = new_token_list
 
     def _find_stop_words(self):
-        all_words = []
-        for tokens in self.tokens_list:
-            all_words += tokens
-
-        values, counts = np.unique(all_words, return_counts=True)
-        self.stop_words_threshold = 3500
+        print(len(self.inverted_index))
+        new_inverted_index = []
         self.stop_words = []
 
-        for i in range(len(values)):
-            if counts[i] > self.stop_words_threshold:
-                print(values[i])
-                print(counts[i])
-                self.stop_words.append(values[i])
+        for term_doc in self.inverted_index:
+            if 1000 < len(term_doc["docs"]) < 10000:
+                new_inverted_index.append(term_doc)
+            else:
+                self.stop_words.append(term_doc["term"])
 
-        self.stop_words = set(self.stop_words)
+        self.inverted_index = new_inverted_index
+        for term_doc in self.inverted_index:
+            print(term_doc["term"])
+
+
+        print(len(self.inverted_index))
+        # all_words = []
+        # for tokens in self.tokens_list:
+        #     all_words += tokens
+        #
+        # values, counts = np.unique(all_words, return_counts=True)
+        # self.stop_words_threshold = 3500
+        # self.stop_words = []
+        #
+        # for i in range(len(values)):
+        #     if counts[i] > self.stop_words_threshold:
+                # self.stop_words.append(values[i])
+        #
+        # self.stop_words = set(self.stop_words)
+
+
 
     def _calculate_idf(self):
-        print(self.inverted_index)
-
         for item in self.inverted_index:
             df = len(item["docs"])
             idf = log10(self.NUMBER_DOCS / df)
             item["idf"] = idf
-            print(item)
 
     def _calculate_length(self):
         self.length_list = []
@@ -270,7 +285,7 @@ class SearchEngine:
             # unique_tokens_list = set(tokens)
             # unique_tokens_list -= self.stop_words
             for j, word in enumerate(unique_tokens_list):
-                if word not in self.stop_words:
+                if True: #word not in self.stop_words:
                     tf = 1 + log10(unique_tokens_counts[j])
                     term_doc_list.append({'term': word, 'doc': i + 1, 'tf': tf})
 
@@ -323,7 +338,7 @@ class SearchEngine:
         for x in self.inverted_index:
             self.dictionary.append(x["term"])
             # if len(x["docs"]) > 10:
-            print(x["term"])
+            # print(x["term"])
 
     def _create_champion_list(self):
         for term_doc in self.inverted_index:
@@ -342,9 +357,9 @@ class SearchEngine:
     def create_inverted_index(self):
         self._load_input_data()
         self._mine_tokens()
-        self._normalize_tokens()
-        self._find_stop_words()
+        # self._normalize_tokens()
         self._aggregate_inverted_index()
+        self._find_stop_words()
         self._create_dictionary()
         self._calculate_idf()
         self._calculate_length()
