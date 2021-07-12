@@ -224,37 +224,16 @@ class SearchEngine:
         self.tokens_list = new_token_list
 
     def _find_stop_words(self):
-        print(len(self.inverted_index))
         new_inverted_index = []
         self.stop_words = []
 
         for term_doc in self.inverted_index:
-            if 1000 < len(term_doc["docs"]) < 10000:
+            if 1000 < len(term_doc["docs"]) < 20000:
                 new_inverted_index.append(term_doc)
             else:
                 self.stop_words.append(term_doc["term"])
 
         self.inverted_index = new_inverted_index
-        for term_doc in self.inverted_index:
-            print(term_doc["term"])
-
-
-        print(len(self.inverted_index))
-        # all_words = []
-        # for tokens in self.tokens_list:
-        #     all_words += tokens
-        #
-        # values, counts = np.unique(all_words, return_counts=True)
-        # self.stop_words_threshold = 3500
-        # self.stop_words = []
-        #
-        # for i in range(len(values)):
-        #     if counts[i] > self.stop_words_threshold:
-                # self.stop_words.append(values[i])
-        #
-        # self.stop_words = set(self.stop_words)
-
-
 
     def _calculate_idf(self):
         for item in self.inverted_index:
@@ -308,6 +287,8 @@ class SearchEngine:
             pickle.dump(self.inverted_index, fp)
         with open('./output_data/dictionary', 'wb') as fp:
             pickle.dump(self.dictionary, fp)
+        with open('./output_data/document_vectors', 'wb') as fp:
+            pickle.dump(self.document_vectors, fp)
 
     def load_inverted_index(self):
         self._load_input_data()
@@ -315,6 +296,8 @@ class SearchEngine:
             self.inverted_index = pickle.load(fp)
         with open('./output_data/dictionary', 'rb') as fp:
             self.dictionary = pickle.load(fp)
+        with open('./output_data/document_vectors', 'rb') as fp:
+            self.document_vectors = pickle.load(fp)
         self._calculate_length()
 
     def _get_documents(self, word):
@@ -354,6 +337,23 @@ class SearchEngine:
                     del doc["score"]
                 term_doc["champion_docs"] = sorted(sorted_doc, key=lambda x: x["id"])
 
+    def _create_document_vectors(self):
+        self.document_vectors = []
+        for i in range(self.NUMBER_DOCS):
+            new_vector = []
+            for j in range(len(self.dictionary)):
+                new_vector.append(0)
+
+            self.document_vectors.append(new_vector)
+
+        term_id = 0
+        for term_doc in self.inverted_index:
+            for doc in term_doc["docs"]:
+                doc_id = doc["id"]
+                doc_tf = doc["tf"]
+                self.document_vectors[doc_id - 1][term_id] = doc_tf
+            term_id += 1
+
     def create_inverted_index(self):
         self._load_input_data()
         self._mine_tokens()
@@ -364,6 +364,7 @@ class SearchEngine:
         self._calculate_idf()
         self._calculate_length()
         self._create_champion_list()
+        self._create_document_vectors()
         self._save_inverted_index()
 
     @staticmethod
@@ -469,6 +470,9 @@ class SearchEngine:
         print(f"Time: {(stop - start)*1000} mS ")
 
     def search(self, query):
+        print(self.document_vectors[0])
+        print(self.document_vectors[1])
+        print(self.document_vectors[2])
         preprocessed_query = self.preprocess(query)
         tokens = preprocessed_query.split(" ")
         self._search_multi_token(tokens)
