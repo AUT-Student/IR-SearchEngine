@@ -300,14 +300,6 @@ class SearchEngine:
 
         self._calculate_length()
 
-        # zero = np.zeros(len(self.inverted_index))
-        # for id, vec in enumerate(self.document_vectors):
-        #     if np.array_equal(zero, vec):
-        #         print(self.url_list[id])
-        self._nearest_neighbours(2500)
-        print(len(self.inverted_index))
-        print(len(self.dictionary))
-        print(len(self.dictionary))
 
     def _get_documents(self, word):
         word = self.preprocess(word)
@@ -363,6 +355,7 @@ class SearchEngine:
     def _nearest_neighbours(self, doc_id):
         vector = self.document_vectors[doc_id-1]
         neighbours = []
+        topic_frequency = {"sport": 0, "economy": 0, "political": 0, "health": 0, "culture": 0}
         for id in range(1, self.NUMBER_DOCS+1):
             # if id != doc_id:
             vector2 = self.document_vectors[id-1]
@@ -370,12 +363,32 @@ class SearchEngine:
             neighbours.append({"doc_id": id, "dist": dist})
 
         sorted_neighbours = sorted(neighbours, key=lambda x: x["dist"])
-        print(self.url_list[doc_id - 1])
-        for i in range(10):
+
+        for i in range(20):
             id = sorted_neighbours[i]["doc_id"]
-            print(sorted_neighbours[i])
-            print(self.url_list[id - 1])
-            print(self.topic_list[id-1])
+            new_topic = self.topic_list[id-1]
+            if new_topic == "sports":
+                new_topic = "sport"
+            elif new_topic == "politics":
+                new_topic = "political"
+            topic_frequency[new_topic] += 1
+
+        best_topic = None
+        best_topic_frequency = 0
+
+        for topic in topic_frequency:
+            if topic_frequency[topic] > best_topic_frequency:
+                best_topic = topic
+                best_topic_frequency = topic_frequency[topic]
+
+        if self.topic_list[doc_id] == best_topic:
+            self.correct_nearest_neighbours += 1
+
+    def evaluate_nearest_neighbours(self):
+        self.correct_nearest_neighbours= 0
+        for i in range(200):
+            self._nearest_neighbours(1000 + 25*i)
+        print(f"{self.correct_nearest_neighbours / 200 * 100} %")
 
     def create_inverted_index(self):
         self._load_input_data()

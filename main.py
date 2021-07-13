@@ -4,6 +4,7 @@ searchEngine = SearchEngine()
 
 # searchEngine.create_inverted_index()
 searchEngine.load_inverted_index()
+searchEngine.evaluate_nearest_neighbours()
 
 print("Ready...")
 while True:
